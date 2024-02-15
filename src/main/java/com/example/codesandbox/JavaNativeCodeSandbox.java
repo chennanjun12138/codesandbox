@@ -14,7 +14,7 @@ import com.example.codesandbox.model.JudgeInfo;
 import com.example.codesandbox.security.DefaultSecurityManager;
 import com.example.codesandbox.security.DenySecurityManager;
 import com.example.codesandbox.utils.ProcessUtils;
-import javafx.scene.paint.Stop;
+//import javafx.scene.paint.Stop;
 
 import java.io.BufferedReader;
 import java.io.File;
