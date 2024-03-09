@@ -6,34 +6,32 @@ import cn.hutool.core.io.resource.ResourceUtil;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.dfa.WordTree;
 import com.example.codesandbox.model.ExecuteCodeRequest;
 import com.example.codesandbox.model.ExecuteCodeResponse;
 import com.example.codesandbox.model.ExecuteMessage;
 import com.example.codesandbox.model.JudgeInfo;
 import com.example.codesandbox.utils.ProcessUtils;
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.async.ResultCallback;
+import com.github.dockerjava.api.command.*;
+import com.github.dockerjava.api.model.*;
+import com.github.dockerjava.core.DockerClientBuilder;
+import com.github.dockerjava.core.command.ExecStartResultCallback;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.Closeable;
 import java.io.File;
-
-import com.github.dockerjava.api.async.ResultCallback;
-import com.github.dockerjava.api.command.*;
-import com.github.dockerjava.core.command.ExecStartResultCallback;
-import com.github.dockerjava.api.model.*;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import com.github.dockerjava.core.DockerClientBuilder;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class JavaDockerCodeSandboxOld implements CodeSandbox {
+public class CDockerCodeSandboxOld implements CodeSandbox {
     private static final String GLOBAL_CODE_DIR_NAME = "tmpCode";
 
-    private static final String GLOBAL_JAVA_CLASS_NAME = "Main.java";
+    private static final String GLOBAL_JAVA_CLASS_NAME = "Main.c";
 
     private static final long TIME_OUT = 5000L;
 
@@ -47,14 +45,14 @@ public class JavaDockerCodeSandboxOld implements CodeSandbox {
 
 
     public static void main(String[] args) {
-        JavaDockerCodeSandboxOld javaDockerCodeSandboxOld = new JavaDockerCodeSandboxOld();
+        CDockerCodeSandboxOld javaDockerCodeSandboxOld = new CDockerCodeSandboxOld();
         ExecuteCodeRequest executeCodeRequest = new ExecuteCodeRequest();
-        executeCodeRequest.setInputList(Arrays.asList("1 2", "1 3"));
-        String code = ResourceUtil.readStr("testCode/simpleComputerArgs/Main.java", StandardCharsets.UTF_8);
+        executeCodeRequest.setInputList(Arrays.asList("3 2", "4 3"));
+        String code = ResourceUtil.readStr("testCode/simpleComputerArgs/Main.c", StandardCharsets.UTF_8);
 //        String code = ResourceUtil.readStr("testCode/simpleComputer/Main.java", StandardCharsets.UTF_8);
 //        String code = ResourceUtil.readStr("testCode/unsafeCode/ReadFileError.java", StandardCharsets.UTF_8);
         executeCodeRequest.setCode(code);
-        executeCodeRequest.setLanguage("java");
+        executeCodeRequest.setLanguage("c");
         ExecuteCodeResponse executeCodeResponse = javaDockerCodeSandboxOld.executeCode(executeCodeRequest);
         System.out.println(executeCodeResponse);
     }
@@ -87,10 +85,12 @@ public class JavaDockerCodeSandboxOld implements CodeSandbox {
 
         //把代码隔离存放
         String userCodeParentPath= globalCodePathName+File.separator+ UUID.randomUUID();
+        System.out.println("userCodeParentPath:"+userCodeParentPath);
         String userCodePath=userCodeParentPath+File.separator+GLOBAL_JAVA_CLASS_NAME;
         File userCodeFile=  FileUtil.writeString(code,userCodePath, StandardCharsets.UTF_8);
-//        2. 编译代码，得到 class 文件
-        String compileCmd = String.format("javac -encoding utf-8 %s", userCodeFile.getAbsolutePath());
+        System.out.println("userCodeFile.getAbsolutePath():"+userCodeFile.getAbsolutePath());
+//        2. 编译代码
+        String compileCmd = String.format("gcc -o %s/main %s", userCodeParentPath,userCodeFile.getAbsolutePath());
         try {
             Process compileProcess  = Runtime.getRuntime().exec(compileCmd);
             ExecuteMessage executeMessage = ProcessUtils.runProcessAndGetMessage(compileProcess, "编译");
@@ -102,7 +102,7 @@ public class JavaDockerCodeSandboxOld implements CodeSandbox {
         // 获取默认的 Docker Client
         DockerClient dockerClient = DockerClientBuilder.getInstance().build();
         // 拉取镜像
-        String image = "openjdk:8-alpine";
+        String image = "gcc:latest";
         if (FIRST_INIT) {
             PullImageCmd pullImageCmd = dockerClient.pullImageCmd(image);
             PullImageResultCallback pullImageResultCallback = new PullImageResultCallback() {
@@ -152,7 +152,19 @@ public class JavaDockerCodeSandboxOld implements CodeSandbox {
         {
             StopWatch stopWatch = new StopWatch();
             String[] inputArgsArray = inputArgs.split(" ");
-            String[] cmdArray = ArrayUtil.append(new String[]{"java", "-cp", "/app", "Main"}, inputArgsArray);
+            String ans="cd /app && echo '";
+            for (String s : inputArgsArray) {
+                ans=ans+s+" ";
+            }
+            ans=ans+"' | ./main";
+            String[] cmdArray = ArrayUtil.append(new String[]{"/bin/bash", "-c"},ans);
+
+            System.out.print("命令内容：");
+            for (String s : cmdArray) {
+                System.out.print(s + " ");
+            }
+
+
             ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(containerId)
                     .withCmd(cmdArray)
                     .withAttachStderr(true)

@@ -1,4 +1,5 @@
 package com.example.codesandbox.controller;
+import com.example.codesandbox.CDockerCodeSandbox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.example.codesandbox.JavaDockerCodeSandbox;
@@ -29,7 +30,7 @@ public class MainController {
         return "ok";
     }
     @Resource
-    private JavaNativeCodeSandbox javaNativeCodeSandbox;
+    private CDockerCodeSandbox cDockerCodeSandbox;
 
     @Resource
     private JavaDockerCodeSandbox javaDockerCodeSandbox;
@@ -53,7 +54,20 @@ public class MainController {
         if (executeCodeRequest == null) {
             throw new RuntimeException("请求参数为空");
         }
-        return javaDockerCodeSandbox.executeCode(executeCodeRequest);
+        String  language=executeCodeRequest.getLanguage();
+        if("java".equals(language))
+        {
+            return javaDockerCodeSandbox.executeCode(executeCodeRequest);
+        }
+        else if("c".equals(language))
+        {
+            return cDockerCodeSandbox.executeCode(executeCodeRequest);
+
+        }
+        else
+        {
+            return null;
+        }
     }
 
 }
