@@ -38,8 +38,16 @@ public abstract class CCodeSandboxTemplate implements CodeSandbox{
 
 //        2. 编译代码
         ExecuteMessage compileFileExecuteMessage = compileFile(userCodeFile);
-        System.out.println(compileFileExecuteMessage);
-
+        System.out.println("编译结果："+compileFileExecuteMessage.getMessage());
+        if(compileFileExecuteMessage.getMessage()=="编译错误")
+        {
+            ExecuteCodeResponse notice=new ExecuteCodeResponse();
+            List<String> list=new ArrayList<>();
+            list.add("编译错误");
+            notice.setOutputList(list);
+            notice.setStatus(3);
+            return  notice;
+        }
         // 3. 执行代码，得到输出结果
         List<ExecuteMessage> executeMessageList = runFile(userCodeFile, inputList);
         System.out.println("最终结果："+executeMessageList);
@@ -88,7 +96,14 @@ public abstract class CCodeSandboxTemplate implements CodeSandbox{
             Process compileProcess = Runtime.getRuntime().exec(compileCmd);
             ExecuteMessage executeMessage = ProcessUtils.runProcessAndGetMessage(compileProcess, "编译");
             if (executeMessage.getExitValue() != 0) {
-                throw new RuntimeException("编译错误");
+                try {
+                    throw new RuntimeException("编译错误");
+                } catch (RuntimeException e) {
+                    // 处理异常
+                    System.out.println("发生异常：" + e.getMessage());
+                    executeMessage.setMessage("编译错误");
+                    return executeMessage;
+                }
             }
             return executeMessage;
         } catch (Exception e) {

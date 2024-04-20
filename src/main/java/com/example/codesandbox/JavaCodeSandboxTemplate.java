@@ -29,6 +29,11 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox{
     @Override
     public ExecuteCodeResponse executeCode(ExecuteCodeRequest executeCodeRequest) {
         List<String> inputList = executeCodeRequest.getInputList();
+        List<String> mergedList = new ArrayList<>();
+        for (String str : inputList) {
+            String mergedString = str.replace("\n", " "); // 去除换行符和首尾空白字符
+            mergedList.add(mergedString);
+        }
         String code = executeCodeRequest.getCode();
         String language = executeCodeRequest.getLanguage();
 
@@ -37,10 +42,18 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox{
 
 //        2. 编译代码，得到 class 文件
         ExecuteMessage compileFileExecuteMessage = compileFile(userCodeFile);
-        System.out.println(compileFileExecuteMessage);
-
+        System.out.println("编译结果"+compileFileExecuteMessage);
+        if(compileFileExecuteMessage.getMessage()=="编译错误")
+        {
+            ExecuteCodeResponse notice=new ExecuteCodeResponse();
+            List<String> list=new ArrayList<>();
+            list.add("编译错误");
+            notice.setOutputList(list);
+            notice.setStatus(3);
+            return  notice;
+        }
         // 3. 执行代码，得到输出结果
-        List<ExecuteMessage> executeMessageList = runFile(userCodeFile, inputList);
+        List<ExecuteMessage> executeMessageList = runFile(userCodeFile, mergedList);
         System.out.println("最终结果："+executeMessageList);
 //        4. 收集整理输出结果
         ExecuteCodeResponse outputResponse = getOutputResponse(executeMessageList);
@@ -86,7 +99,14 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox{
             Process compileProcess = Runtime.getRuntime().exec(compileCmd);
             ExecuteMessage executeMessage = ProcessUtils.runProcessAndGetMessage(compileProcess, "编译");
             if (executeMessage.getExitValue() != 0) {
-                throw new RuntimeException("编译错误");
+                try {
+                    throw new RuntimeException("编译错误");
+                } catch (RuntimeException e) {
+                    // 处理异常
+                    System.out.println("发生异常：" + e.getMessage());
+                    executeMessage.setMessage("编译错误");
+                    return executeMessage;
+                }
             }
             return executeMessage;
         } catch (Exception e) {

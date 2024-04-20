@@ -121,8 +121,10 @@ public class JavaDockerCodeSandbox  extends JavaCodeSandboxTemplate {
         List<ExecuteMessage> executeMessageList = new ArrayList<>();
         System.out.println(inputList);
         for (String inputArgs : inputList) {
+            System.out.println(inputArgs);
             StopWatch stopWatch = new StopWatch();
             String[] inputArgsArray = inputArgs.split(" ");
+
             String[] cmdArray = ArrayUtil.append(new String[]{"java", "-cp", "/app", "Main"}, inputArgsArray);
             ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(containerId)
                     .withCmd(cmdArray)
