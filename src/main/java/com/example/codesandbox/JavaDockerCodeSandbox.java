@@ -43,22 +43,6 @@ public class JavaDockerCodeSandbox  extends JavaCodeSandboxTemplate {
     public ExecuteCodeResponse executeCode(ExecuteCodeRequest executeCodeRequest) {
         return super.executeCode(executeCodeRequest);
     }
-
-//    public static void main(String[] args) {
-//        JavaDockerCodeSandbox javaNativeCodeSandbox = new JavaDockerCodeSandbox();
-//        ExecuteCodeRequest executeCodeRequest = new ExecuteCodeRequest();
-//        executeCodeRequest.setInputList(Arrays.asList("1 2", "1 3"));
-//
-//        String code = ResourceUtil.readStr("testCode/simpleComputerArgs/Main.java", StandardCharsets.UTF_8);
-////        String code = ResourceUtil.readStr("testCode/simpleComputer/Main.java", StandardCharsets.UTF_8);
-////        String code = ResourceUtil.readStr("testCode/unsafeCode/ReadFileError.java", StandardCharsets.UTF_8);
-//
-//        executeCodeRequest.setCode(code);
-//        executeCodeRequest.setLanguage("java");
-//        ExecuteCodeResponse executeCodeResponse = javaNativeCodeSandbox.executeCode(executeCodeRequest);
-//        System.out.println(executeCodeResponse);
-//    }
-
     /**
      * 3、创建容器，把文件复制到容器内
      * @param userCodeFile
@@ -158,7 +142,15 @@ public class JavaDockerCodeSandbox  extends JavaCodeSandboxTemplate {
                         errorMessage[0] = new String(frame.getPayload());
                         System.out.println("输出错误结果：" + errorMessage[0]);
                     } else {
-                        message[0] = new String(frame.getPayload());
+                        String ans="";
+                        if(message[0]!=null) {
+                            message[0] =message[0]+new String(frame.getPayload());
+                        }
+                        else
+                        {
+                            message[0] =new String(frame.getPayload());
+                        }
+
                         System.out.println("输出结果：" + message[0]);
                     }
                     super.onNext(frame);

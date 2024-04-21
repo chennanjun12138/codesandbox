@@ -101,9 +101,15 @@ public class CDockerCodeSandbox extends CCodeSandboxTemplate {
             String[] inputArgsArray = inputArgs.split(" ");
             String ans="cd /app && echo '";
             for (String s : inputArgsArray) {
+
+                if (s.contains("'")) {
+                    s = s.replace("'", "a");
+                }
+                System.out.println(s);
                 ans=ans+s+" ";
             }
             ans=ans+"' | ./main";
+
             String[] cmdArray = ArrayUtil.append(new String[]{"/bin/bash", "-c"},ans);
             ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(containerId)
                     .withCmd(cmdArray)
