@@ -91,7 +91,7 @@ public abstract class CCodeSandboxTemplate implements CodeSandbox{
      */
     public ExecuteMessage compileFile(File userCodeFile) {
         System.out.println(userCodeFile.getAbsolutePath());
-        String compileCmd = String.format("gcc -o %s/main %s", userCodeFile.getParent(),userCodeFile.getAbsolutePath());
+        String compileCmd = String.format("gcc -o %s/main %s -lm", userCodeFile.getParent(),userCodeFile.getAbsolutePath());
         try {
             Process compileProcess = Runtime.getRuntime().exec(compileCmd);
             ExecuteMessage executeMessage = ProcessUtils.runProcessAndGetMessage(compileProcess, "编译");
